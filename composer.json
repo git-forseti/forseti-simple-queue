@@ -1,0 +1,27 @@
+{
+    "name": "forseti/simple-queue",
+    "description": "Gerenciamento de filas simples utlizando o redis",
+    "require": {
+        "predis/predis": "^1.1",
+        "phpunit/phpunit": "^4.8"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "Forseti\\SimpleQueue\\": "src/"
+        }
+    },
+
+    "autoload-dev": {
+        "psr-4": {
+            "Forseti\\SimpleQueue\\Test\\": "tests/"
+        }
+    },
+
+    "authors": [
+        {
+            "name": "Diego Saouda",
+            "email": "diego.saouda@forseit.com.br"
+        }
+    ]
+}
