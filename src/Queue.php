@@ -57,8 +57,7 @@ class Queue
         $queue = $this->queue;
         $reserved = $queue.':reserved';
         $this->migrateExpiredJobs($reserved, $queue);
-
-        die;
+        
         $data = $this->predis->blpop($queue, $timeout);
 
         if ($data === null) {
