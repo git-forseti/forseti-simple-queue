@@ -2,7 +2,7 @@
 
 namespace Forseti\SimpleQueue;
 
-use Predis\Client;
+use Predis\ClientInterface;
 
 class Queue
 {
@@ -18,7 +18,7 @@ class Queue
     private $maxAttempt = 3;
 
     /**
-     * @var Client
+     * @var ClientInterface
      */
     private $predis;
 
@@ -29,10 +29,10 @@ class Queue
 
     /**
      * Queue constructor.
-     * @param Client $predis
+     * @param ClientInterface $predis
      * @param string $queue
      */
-    public function __construct(Client $predis, $queue)
+    public function __construct(ClientInterface $predis, $queue)
     {
         $this->predis = $predis;
         $this->queue = $queue;
@@ -58,6 +58,7 @@ class Queue
         $reserved = $queue.':reserved';
         $this->migrateExpiredJobs($reserved, $queue);
 
+        die;
         $data = $this->predis->blpop($queue, $timeout);
 
         if ($data === null) {

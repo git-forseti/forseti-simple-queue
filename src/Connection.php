@@ -3,21 +3,21 @@
 namespace Forseti\SimpleQueue;
 
 
-use Predis\Client;
+use Predis\ClientInterface;
 
 class Connection
 {
 
     /**
-     * @var Client
+     * @var ClientInterface
      */
     private $predis;
 
     /**
      * Connection constructor.
-     * @param Client $predis
+     * @param ClientInterface $predis
      */
-    public function __construct(Client $predis)
+    public function __construct(ClientInterface $predis)
     {
         $this->predis = $predis;
     }
