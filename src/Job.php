@@ -81,7 +81,7 @@ class Job
      * @param string $id
      * @return $this
      */
-    private function setId($id)
+    public function setId($id)
     {
         $this->id = $id;
         return $this;

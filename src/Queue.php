@@ -28,6 +28,11 @@ class Queue
     private $queue;
 
     /**
+     * @var string
+     */
+    private $queueUK;
+
+    /**
      * Queue constructor.
      * @param ClientInterface $predis
      * @param string $queue
@@ -36,6 +41,7 @@ class Queue
     {
         $this->predis = $predis;
         $this->queue = $queue;
+        $this->queueUK = $this->queue . ':uk';
     }
 
     /**
@@ -44,7 +50,12 @@ class Queue
      */
     public function push(Job $job)
     {
-        return $this->predis->rpush($this->queue, $job->payload());
+        if (!$this->predis->hexists($this->queueUK, $job->getId())) {
+            $this->predis->hset($this->queueUK, $job->getId(), 1);
+            return $this->predis->rpush($this->queue, $job->payload());
+        }
+
+        return 0;
     }
 
     /**
@@ -77,6 +88,7 @@ class Queue
      */
     public function processed(Job $job)
     {
+        $this->predis->hdel($this->queueUK, [$job->getId()]);
         return $this->predis->zrem($this->queue.':reserved', $job->payload()) ? true : false;
     }
 
@@ -134,6 +146,7 @@ class Queue
             $queue = $to;
             if ($job->getAttempts() > $this->maxAttempt) {
                 $queue = $to . ':failed';
+                $this->predis->hdel($this->queueUK, [$job->getId()]);
             }
 
             $transaction->rpush($queue, $job->payload());
