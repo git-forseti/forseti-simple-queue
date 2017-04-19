@@ -11,30 +11,21 @@ use Predis\Profile\Factory;
 
 class QueueTest extends \PHPUnit_Framework_TestCase
 {
+    private $options = ['database'=>12];
 
     public function testPushStub()
     {
         $job1 = new Job(['name' => 'Novo Job']);
         $job2 = new Job(['name' => 'Novo Job2']);
 
-        $queueStub = $this->getMockBuilder(Queue::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $predis = new Client($this->options);
+        $connection = new Connection($predis);
+        $queue = $connection->queue('test');
 
-        $queueStub
-            ->expects($this->at(0))
-            ->method('push')
-            ->with($job1)
-            ->willReturn(1);
+        $this->assertEquals(1, $queue->push($job1));
+        $this->assertEquals(2, $queue->push($job2));
 
-        $queueStub
-            ->expects($this->at(1))
-            ->method('push')
-            ->with($job2)
-            ->willReturn(1);
-
-        $this->assertEquals(1, $queueStub->push($job1));
-        $this->assertEquals(1, $queueStub->push($job2));
+        $predis->flushdb();
     }
 
     public function testPullStub()
@@ -42,52 +33,42 @@ class QueueTest extends \PHPUnit_Framework_TestCase
         $job1 = new Job(['name' => 'Novo Job']);
         $job2 = new Job(['name' => 'Novo Job2']);
 
-        $queueStub = $this->getMockBuilder(Queue::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $predis = new Client($this->options);
+        $connection = new Connection($predis);
+        $queue = $connection->queue('test');
+        $queue->push($job1);
+        $queue->push($job2);
 
-        $queueStub
-            ->expects($this->at(0))
-            ->method('pull')
-            ->willReturn($job1);
-
-        $queueStub
-            ->expects($this->at(1))
-            ->method('pull')
-            ->willReturn($job2);
-
-        $this->assertEquals($job1, $queueStub->pull());
-        $this->assertEquals($job2, $queueStub->pull());
+        $this->assertEquals($job1, $queue->pull());
+        $this->assertEquals($job2, $queue->pull());
+        $predis->flushdb();
     }
 
     public function testPushOld()
     {
-        $redis = $this->getMockBuilder(ClientInterface::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $predis = new Client($this->options);
+        $connection = new Connection($predis);
+        $queue = $connection->queue('test');
 
-        $redis->method('__call')
-            ->willReturn(1);
-
-        $queue = (new Connection($redis))->queue('mock');
         $this->assertEquals(1, $queue->push(new Job(['name' => 'Novo Job'])));
+        $predis->flushdb();
     }
 
 
     public function testPush()
     {
         $job = new Job(['name' => 'Novo Job']);
-        $profile = Factory::getDefault();
-        $rpush = $profile->createCommand('rpush', ['mock', $job->payload()]);
+        $predis = new Client($this->options);
+        $connection = new Connection($predis);
+        $queue = $connection->queue('test');
 
-        $connection = $this->getMock('Predis\Connection\ConnectionInterface');
-        $connection->expects($this->at(0))
-            ->method('executeCommand')
-            ->with($rpush)
-            ->will($this->returnValue(1));
-
-        $client = new Client($connection);
-        $queue = (new Connection($client))->queue('mock');
         $this->assertEquals(1, $queue->push($job));
+        $this->assertEquals($job, $queue->pull());
+
+        $job2 = new Job(['name'=>'Novo Job 2']);
+        $this->assertEquals(1, $queue->push($job2));
+        $this->assertEquals($job2, $queue->pull());
+
+        $predis->flushdb();
     }
 }
